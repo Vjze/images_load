@@ -1,7 +1,7 @@
 use iced::{
     executor,
-    widget::{button, column, container, image, row, text, text_input, Image, Space},
-    Application, Command, Length, Theme, Subscription,
+    widget::{button, column, container, image, row, text, text_input, Image, Space, tooltip},
+    Application, Command, Length, Theme, Subscription, keyboard, Element, theme,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -106,24 +106,39 @@ impl Application for LoadImages {
         }
     }
     fn subscription(&self) -> Subscription<Message> {
-            iced::subscription::events_with(|event, _| {
-                if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed {
-                    key_code,
-                    modifiers,
-                }) = event
-                {
-                    if key_code == iced::keyboard::KeyCode::Down && modifiers.is_empty() {
-                        return Some(Message::Next);
-                    }
-                    if key_code == iced::keyboard::KeyCode::Up && modifiers.is_empty() {
-                        return Some(Message::Pre);
-                    }if key_code == iced::keyboard::KeyCode::Right && modifiers.is_empty() {
-                        return Some(Message::Next);
-                    }if key_code == iced::keyboard::KeyCode::Left && modifiers.is_empty() {
-                        return Some(Message::Pre);
-                    }
+            // iced::subscription::events_with(|event, _| {
+            //     if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed {
+            //         key_code,
+            //         modifiers,
+            //     }) = event
+            //     {
+            //         if key_code == iced::keyboard::KeyCode::Down && modifiers.is_empty() {
+            //             return Some(Message::Next);
+            //         }
+            //         if key_code == iced::keyboard::KeyCode::Up && modifiers.is_empty() {
+            //             return Some(Message::Pre);
+            //         }if key_code == iced::keyboard::KeyCode::Right && modifiers.is_empty() {
+            //             return Some(Message::Next);
+            //         }if key_code == iced::keyboard::KeyCode::Left && modifiers.is_empty() {
+            //             return Some(Message::Pre);
+            //         }
+            //     }
+            //     None
+            // })
+            keyboard::on_key_press(|key_code, modifiers| match key_code {
+                keyboard::KeyCode::Down if modifiers.is_empty() => {
+                    Some(Message::Next)
                 }
-                None
+                keyboard::KeyCode::Right if modifiers.is_empty() => {
+                    Some(Message::Next)
+                }
+                keyboard::KeyCode::Left if modifiers.is_empty() => {
+                    Some(Message::Pre)
+                }
+                keyboard::KeyCode::Up if modifiers.is_empty() => {
+                    Some(Message::Pre)
+                }
+                _ => None,
             })
     }
 
@@ -135,9 +150,10 @@ impl Application for LoadImages {
             .align_items(iced::Alignment::Center),
         )
         .center_x(); //.width(1920).height(1080);
-        let load_btn = button("load").on_press(Message::Load);
-        let pre_btn = button("pre").on_press(Message::Pre);
-        let next_btn = button("next").on_press(Message::Next);
+        let isempty = self.images.len() != 0;
+        let load_btn = action(text("Load"), "Load", true.then_some(Message::Load));;
+        let pre_btn = action(text("Pre"), "Pre", isempty.then_some(Message::Pre));
+        let next_btn = action(text("Next"), "Next", isempty.then_some(Message::Next));
         let all = text(format!("all :{}", self.images.clone().len()));
         let now = text(format!("now : {}", self.num.clone()));
         let flie_name = text(format!("{}", self.now.name)).width(500);
@@ -180,4 +196,23 @@ async fn load() -> Vec<ImageInfo> {
         });
     }
     list
+}
+fn action<'a, Message: Clone + 'a>(
+    content: impl Into<Element<'a, Message>>,
+    label: &'a str,
+    on_press: Option<Message>,
+) -> Element<'a, Message> {
+    let action = button(container(content).width(30).center_x());
+
+    if let Some(on_press) = on_press {
+        tooltip(
+            action.on_press(on_press),
+            label,
+            tooltip::Position::FollowCursor,
+        )
+        .style(theme::Container::Box)
+        .into()
+    } else {
+        action.style(theme::Button::Secondary).into()
+    }
 }
