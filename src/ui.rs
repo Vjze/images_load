@@ -14,6 +14,7 @@ pub struct LoadImages {
     now: ImageInfo,
     num: usize,
     input: String,
+
 }
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -106,25 +107,6 @@ impl Application for LoadImages {
         }
     }
     fn subscription(&self) -> Subscription<Message> {
-            // iced::subscription::events_with(|event, _| {
-            //     if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed {
-            //         key_code,
-            //         modifiers,
-            //     }) = event
-            //     {
-            //         if key_code == iced::keyboard::KeyCode::Down && modifiers.is_empty() {
-            //             return Some(Message::Next);
-            //         }
-            //         if key_code == iced::keyboard::KeyCode::Up && modifiers.is_empty() {
-            //             return Some(Message::Pre);
-            //         }if key_code == iced::keyboard::KeyCode::Right && modifiers.is_empty() {
-            //             return Some(Message::Next);
-            //         }if key_code == iced::keyboard::KeyCode::Left && modifiers.is_empty() {
-            //             return Some(Message::Pre);
-            //         }
-            //     }
-            //     None
-            // })
             keyboard::on_key_press(|key_code, modifiers| match key_code {
                 keyboard::KeyCode::Down if modifiers.is_empty() => {
                     Some(Message::Next)
@@ -145,13 +127,17 @@ impl Application for LoadImages {
     fn view(&self) -> iced::Element<'_, Self::Message, iced::Renderer<Self::Theme>> {
         let image_view = container(
             row!(Image::<image::Handle>::new(self.now.clone().path)
-                .height(930)
-                .width(1920))
+                .height(Length::Fill)
+                .width(Length::Fill)
+            )
             .align_items(iced::Alignment::Center),
         )
-        .center_x(); //.width(1920).height(1080);
+        .center_x()
+        .center_y()
+        .max_width(1920)
+        .max_height(850); //.width(1920).height(1080);
         let isempty = self.images.len() != 0;
-        let load_btn = action(text("Load"), "Load", true.then_some(Message::Load));;
+        let load_btn = action(text("Load"), "Load", true.then_some(Message::Load));
         let pre_btn = action(text("Pre"), "Pre", isempty.then_some(Message::Pre));
         let next_btn = action(text("Next"), "Next", isempty.then_some(Message::Next));
         let all = text(format!("all :{}", self.images.clone().len()));
@@ -175,9 +161,9 @@ impl Application for LoadImages {
         )
         .align_items(iced::Alignment::End)
         .spacing(50).padding(15);
-        let col = column!(image_view, Space::new(Length::Fill, Length::Shrink), row);
+        let col = column!(image_view, Space::new(Length::Fill, Length::Shrink), row).padding(15);
           
-        container(col).center_x().padding(10).into()
+        container(col).center_x().center_y().padding(10).into()
     }
 }
 async fn load() -> Vec<ImageInfo> {

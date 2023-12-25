@@ -9,4 +9,22 @@ edition = "2021"
 rfd = "0.12.1"
 walkdir = "2.4.0"
 iced = {git = "https://github.com/iced-rs/iced.git", features = ["image"] }
+image = { version = "0.24.7", default-features = false, features = ["png"]}
 
+[build-dependencies]
+embed-resource = "2.4"
+
+
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
