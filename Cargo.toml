@@ -9,7 +9,7 @@ edition = "2021"
 rfd = "0.12.1"
 walkdir = "2.4.0"
 iced = {git = "https://github.com/iced-rs/iced.git", features = ["image"] }
-image = { version = "0.24.7", default-features = false, features = ["png"]}
+image = { version = "0.24.7",default-features = true}
 
 [build-dependencies]
 embed-resource = "2.4"
