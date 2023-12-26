@@ -6,6 +6,8 @@ use iced::{
 use ui::LoadImages;
 mod ui;
 mod loadfile;
+mod view;
+mod tip;
 fn main() -> iced::Result {
     let icon = window::icon::from_file_data(
         include_bytes!("../resources/logo/icons.png"),

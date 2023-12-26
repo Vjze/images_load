@@ -1112,6 +1112,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "iced_aw"
+version = "0.7.0"
+source = "git+https://github.com/iced-rs/iced_aw.git#91038aa38020e9eea4b8df0fdc4387e02b1bf03b"
+dependencies = [
+ "cfg-if",
+ "iced_widget",
+ "num-traits",
+]
+
+[[package]]
 name = "iced_core"
 version = "0.12.0"
 source = "git+https://github.com/iced-rs/iced.git#eaaea414b8544b883c0388a5a92cbb0df7fc6633"
@@ -1283,6 +1293,7 @@ version = "0.1.0"
 dependencies = [
  "embed-resource",
  "iced",
+ "iced_aw",
  "image",
  "rfd",
  "walkdir",

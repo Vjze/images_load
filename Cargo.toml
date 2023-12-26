@@ -10,6 +10,7 @@ rfd = "0.12.1"
 walkdir = "2.4.0"
 iced = {git = "https://github.com/iced-rs/iced.git", features = ["image"] }
 image = { version = "0.24.7",default-features = true}
+iced_aw = { git = "https://github.com/iced-rs/iced_aw.git", default-features = false, features = ["modal","card","num-traits","spinner"] }
 
 [build-dependencies]
 embed-resource = "2.4"
