@@ -17,7 +17,9 @@ fn main() -> iced::Result {
     LoadImages::run(Settings {
         window: window::Settings {
             icon,
-            size: Size::new(1920.0, 1080.0),
+            // size: Size::new(1920.0, 1080.0),
+            size: Size::new(1600.0, 900.0),
+            // min_size: Some(Size::new(1600.0, 900.0)),
             position: Position::Centered,
             ..window::Settings::default()
         },

@@ -228,7 +228,7 @@ impl Application for LoadImages {
                         .center_x()
                         .center_y()
                         .max_width(1920)
-                        .max_height(850); //.width(1920).height(1080);
+                        .max_height(900); 
                         let isempty = state.images.len() != 0;
                         let load_btn = action(
                             text("打开文件夹"),
@@ -275,8 +275,7 @@ impl Application for LoadImages {
                         .spacing(50)
                         .padding(15);
 
-                        let col = column!(image_view, Space::new(Length::Fill, Length::Fill), row)
-                            .padding(10);
+                        let col = column!(image_view, Space::new(Length::Fill, Length::Fill), row);
                         let body = match state.errs {
                             Error::DialogClosed => "选择框已关闭",
                             Error::ListNone => "当前目录下没有找到图片!!!",
