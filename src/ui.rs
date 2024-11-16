@@ -1,19 +1,18 @@
 use iced::{
-    executor, keyboard, theme,
-    widget::{
-        button, column, container, image::Handle, row, text, text_input, tooltip, Image, Space,
-    },
-    Application, Command, Element, Length, Subscription, Theme,
+    keyboard, widget::{
+        button, center, column, container, image::Handle, row, text, text_input, tooltip, Image, Space
+    }, Element, Length, Subscription, Task
 };
 
 use crate::{
     loadfile::{load, Error, ImageInfo},
-    tip::tip,
+    tip::modal,
     view::{load_message, loading_message},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum LoadImages {
+    #[default]
     Load,
     Loading,
     Loaded(State),
@@ -34,36 +33,17 @@ pub enum Message {
     Next,
     InputChange(String),
     Pre,
-    FontLoaded(Result<(), iced::font::Error>),
-    OpenModal,
     CloseModal,
+    OpenModal
 }
-impl Application for LoadImages {
-    type Executor = executor::Default;
-
-    type Message = Message;
-
-    type Theme = Theme;
-
-    type Flags = ();
-
-    fn new(_flags: Self::Flags) -> (LoadImages, iced::Command<Self::Message>) {
-        let font_command = iced::font::load(
-            include_bytes!("../resources/assets/SourceHanSansHWSC-Regular.otf").as_slice(),
-        );
-        (LoadImages::Load, font_command.map(Message::FontLoaded))
-    }
-
-    fn title(&self) -> String {
-        "Image-Loader".to_string()
-    }
-
-    fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+impl LoadImages {
+    
+    pub fn update(&mut self, message: Message) -> Task<Message> {
         match self {
             LoadImages::Load => match message {
                 Message::Load => {
                     *self = LoadImages::Loading;
-                    Command::perform(load(), Message::Loaded)
+                    Task::perform(load(), Message::Loaded)
                 }
                 Message::Loaded(Ok(state)) => {
                     *self = LoadImages::Loaded(State {
@@ -72,7 +52,7 @@ impl Application for LoadImages {
                         num: 1,
                         ..State::default()
                     });
-                    Command::none()
+                    Task::none()
                 }
                 Message::Loaded(Err(e)) => {
                     *self = LoadImages::Loaded(State {
@@ -80,9 +60,9 @@ impl Application for LoadImages {
                         errs: e,
                         ..Default::default()
                     });
-                    Command::none()
+                    Task::none()
                 }
-                _ => Command::none(),
+                _ => Task::none(),
             },
             LoadImages::Loading => match message {
                 Message::Loaded(Ok(state)) => {
@@ -92,7 +72,7 @@ impl Application for LoadImages {
                         num: 1,
                         ..State::default()
                     });
-                    Command::none()
+                    Task::none()
                 }
                 Message::Loaded(Err(e)) => {
                     *self = LoadImages::Loaded(State {
@@ -100,13 +80,13 @@ impl Application for LoadImages {
                         errs: e,
                         ..Default::default()
                     });
-                    Command::none()
+                    Task::none()
                 }
-                _ => Command::none(),
+                _ => Task::none(),
             },
             LoadImages::Loaded(state) => {
                 let command = match message {
-                    Message::Load => Command::perform(load(), Message::Loaded),
+                    Message::Load => Task::perform(load(), Message::Loaded),
                     Message::Next => {
                         let now = state.num.clone();
                         let input = if state.input.len() == 0 {
@@ -126,7 +106,7 @@ impl Application for LoadImages {
                             state.num += 1;
                         }
                         state.input.clear();
-                        Command::none()
+                        Task::none()
                     }
                     Message::Loaded(Ok(list)) => {
                         *self = LoadImages::Loaded(State {
@@ -135,11 +115,11 @@ impl Application for LoadImages {
                             num: 1,
                             ..State::default()
                         });
-                        Command::none()
+                        Task::none()
                     }
                     Message::InputChange(i) => {
                         state.input = i;
-                        Command::none()
+                        Task::none()
                     }
                     Message::Pre => {
                         let mut now = state.num.clone();
@@ -160,38 +140,37 @@ impl Application for LoadImages {
                             let _ = state.num -= 1;
                         }
                         state.input.clear();
-                        Command::none()
+                        Task::none()
                     }
-                    Message::FontLoaded(_) => Command::none(),
                     Message::Loaded(Err(e)) => {
                         state.tip = true;
                         state.errs = e;
-                        Command::none()
+                        Task::none()
                     }
                     Message::OpenModal => {
                         state.tip = true;
-                        Command::none()
+                        Task::none()
                     }
                     Message::CloseModal => {
                         state.tip = false;
-                        Command::none()
+                        Task::none()
                     }
                 };
-                Command::batch(vec![command])
+                Task::batch(vec![command])
             }
         }
     }
-    fn subscription(&self) -> Subscription<Message> {
+    pub fn subscription(&self) -> Subscription<Message> {
         keyboard::on_key_press(|key_code, modifiers| match key_code {
-            keyboard::KeyCode::Down if modifiers.is_empty() => Some(Message::Next),
-            keyboard::KeyCode::Right if modifiers.is_empty() => Some(Message::Next),
-            keyboard::KeyCode::Left if modifiers.is_empty() => Some(Message::Pre),
-            keyboard::KeyCode::Up if modifiers.is_empty() => Some(Message::Pre),
+            keyboard::Key::Named(keyboard::key::Named::ArrowDown) if modifiers.is_empty() => Some(Message::Next),
+            keyboard::Key::Named(keyboard::key::Named::ArrowRight) if modifiers.is_empty() => Some(Message::Next),
+            keyboard::Key::Named(keyboard::key::Named::ArrowUp) if modifiers.is_empty() => Some(Message::Pre),
+            keyboard::Key::Named(keyboard::key::Named::ArrowLeft) if modifiers.is_empty() => Some(Message::Pre),
             _ => None,
         })
     }
 
-    fn view(&self) -> iced::Element<'_, Self::Message, iced::Renderer<Self::Theme>> {
+    pub fn view(&self) -> Element<Message> {
         let load_btn = action(
             text("打开文件夹"),
             "打开文件夹",
@@ -202,31 +181,29 @@ impl Application for LoadImages {
         let view = match self {
             LoadImages::Load => {
                 let view = load_message();
-                let col = column!(view, load_btn).align_items(iced::Alignment::Center);
-                container(col).center_x().center_y().padding(15).into()
+                let col = column!(view, load_btn).align_x(iced::Alignment::Center);
+                center(col).padding(15).into()
             }
             LoadImages::Loaded(state) => {
                 match state.images.is_empty() {
                     true => {
                         let view = load_message();
-                        let col = column!(view, load_btn).align_items(iced::Alignment::Center);
+                        let col = column!(view, load_btn).align_x(iced::Alignment::Center);
                         let body = match state.errs {
                             Error::DialogClosed => "选择框已关闭",
                             Error::ListNone => "当前目录下没有找到图片!!!",
                         };
-                        let all_tip = tip(state.tip, container(col), body);
-                        container(all_tip).center_x().center_y().padding(15).into()
+                        let all_tip = modal(state.tip, container(col).into(), body.to_string());
+                        center(all_tip).padding(15).into()
                     }
                     false => {
                         let img = image::open(state.now.clone().path).unwrap().into_rgba8();
                         let (width, height) = img.dimensions();
-                        let imgs = Image::new(Handle::from_pixels(width, height, img.into_raw()));
-                        let image_view = container(
+                        let imgs = Image::new(Handle::from_rgba(width, height, img.into_raw()));
+                        let image_view = center(
                             row!(imgs.height(Length::Fill).width(Length::Fill))
-                                .align_items(iced::Alignment::Center),
+                                .align_y(iced::Alignment::Center),
                         )
-                        .center_x()
-                        .center_y()
                         .max_width(1920)
                         .max_height(900); 
                         let isempty = state.images.len() != 0;
@@ -271,7 +248,7 @@ impl Application for LoadImages {
                             now,
                             all,
                         )
-                        .align_items(iced::Alignment::End)
+                        .align_y(iced::Alignment::End)
                         .spacing(50)
                         .padding(15);
 
@@ -280,9 +257,8 @@ impl Application for LoadImages {
                             Error::DialogClosed => "选择框已关闭",
                             Error::ListNone => "当前目录下没有找到图片!!!",
                         };
-                        let all_tip = tip(state.tip, container(col), body);
-                        container(all_tip)
-                            .center_x()
+                        let all_tip = modal(state.tip, container(col).into(), body.to_string());
+                        center(all_tip)
                             .padding(5)
                             .height(Length::Fill)
                             .into()
@@ -301,7 +277,7 @@ fn action<'a, Message: Clone + 'a>(
     on_press: Option<Message>,
     width: u16,
 ) -> Element<'a, Message> {
-    let action = button(container(content).width(width).center_x());
+    let action = button(container(content).width(width).center_x(Length::Fill));
 
     if let Some(on_press) = on_press {
         tooltip(
@@ -309,9 +285,9 @@ fn action<'a, Message: Clone + 'a>(
             label,
             tooltip::Position::FollowCursor,
         )
-        .style(theme::Container::Box)
+        // .style(theme::Container::Box)
         .into()
     } else {
-        action.style(theme::Button::Secondary).into()
+        action.into()
     }
 }

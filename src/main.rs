@@ -1,31 +1,28 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use iced::{
-    window::{self, Position},
-    Application, Font, Settings, Size,
+    advanced::graphics::image::image_rs::ImageFormat,
+    window::{self}, Font, Size,
 };
 use ui::LoadImages;
-mod ui;
 mod loadfile;
-mod view;
 mod tip;
+mod ui;
+mod view;
 fn main() -> iced::Result {
     let icon = window::icon::from_file_data(
         include_bytes!("../resources/logo/icons.png"),
-        Some(image::ImageFormat::Png),
+        Some(ImageFormat::from_mime_type("image/png").unwrap()),
     )
     .ok();
-    LoadImages::run(Settings {
-        window: window::Settings {
+    iced::application("Image-Loader", LoadImages::update, LoadImages::view)
+        .font(include_bytes!("../resources/assets/SourceHanSansHWSC-Regular.otf").as_slice())
+        .centered()
+        .default_font(Font::with_name("Source Han Sans HW SC"))
+        .window_size(Size::new(1600.0, 900.0))
+        .subscription(LoadImages::subscription)
+        .window(window::Settings {
             icon,
-            // size: Size::new(1920.0, 1080.0),
-            size: Size::new(1600.0, 900.0),
-            // min_size: Some(Size::new(1600.0, 900.0)),
-            position: Position::Centered,
-            ..window::Settings::default()
-        },
-        default_font: Font::with_name("Source Han Sans HW SC"),
-        ..Default::default()
-    })?;
-
-    Ok(())
+            ..Default::default()
+        })
+        .run()
 }
