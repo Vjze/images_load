@@ -54,7 +54,16 @@ pub fn modal<'a>(state: bool, base: Element<'a, Message>, str: String) -> Elemen
             .spacing(25),
         )
         .width(300)
-        .height(200);
+        .height(200).style(|_theme|{
+            container::Style { background: Some(
+                Color {
+                    a: 1.,
+                    ..Color::BLACK
+                }
+                .into(),
+            ),
+            ..container::Style::default() }
+        });
         stack![
             base,
             opaque(
@@ -70,7 +79,7 @@ pub fn modal<'a>(state: bool, base: Element<'a, Message>, str: String) -> Elemen
                         ..container::Style::default()
                     }
                 }))
-                .on_press(Message::CloseModal)
+                // .on_press(Message::CloseModal)
             )
         ]
         .into()
